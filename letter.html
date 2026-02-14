@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Love Letter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #cc9dac 0%, #deccd2 50%, #f9eaed 100%);
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* 3D Envelope Container */
+        .envelope-container {
+            position: relative;
+            width: 300px;
+            height: 200px;
+            cursor: pointer;
+            transition: transform 0.4s ease;
+            perspective: 1000px;
+            z-index: 10;
+        }
+
+        .envelope-container:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Envelope Body */
+        .envelope {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: #e8dcc8;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+
+        /* Envelope Flap */
+        .flap {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-top: 100px solid #c3a296; /* Slightly darker for flap */
+            transform-origin: top;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 30;
+        }
+
+        /* Envelope Pocket (Bottom part) */
+        .pocket {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-left: 150px solid transparent;
+            border-right: 150px solid transparent;
+            border-bottom: 100px solid #b7998e;
+            z-index: 20;
+            border-radius: 0 0 10px 10px;
+        }
+        
+        /* Side shadows for depth */
+        .side-left {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 0;
+            border-top: 100px solid transparent;
+            border-bottom: 100px solid transparent;
+            border-left: 150px solid #c8a89b;
+            z-index: 15;
+        }
+        
+        .side-right {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-top: 100px solid transparent;
+            border-bottom: 100px solid transparent;
+            border-right: 150px solid #c8a89b;
+            z-index: 15;
+        }
+
+        /* The Letter */
+        .letter {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            width: 280px;
+            height: 180px;
+            background: 
+                repeating-linear-gradient(
+                    transparent,
+                    transparent 27px,
+                    #a8d4f0 27px,
+                    #a8d4f0 28px
+                ),
+                linear-gradient(to bottom, #fff9f0 0%, #fffef9 100%);
+            border-radius: 5px;
+            z-index: 10;
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1), inset 0 0 30px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            transform-origin: bottom;
+            border-left: 3px solid #ca9c9c;
+            position: relative;
+        }
+        
+        .letter::before {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: #dfc6c6;
+        }
+
+        .letter-content {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.5s ease 0.5s, transform 0.5s ease 0.5s;
+        }
+
+        .letter-content h1 {
+            font-family: 'Great Vibes', cursive;
+            color: #a11d1d;
+            font-size: 1.8rem;
+            margin: 0;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        /* Open State Classes */
+        .open .flap {
+            transform: rotateX(180deg);
+            z-index: 5; /* Move behind when open */
+        }
+
+        .open .letter {
+            bottom: 120px; /* Slide up */
+            transform: scale(1.2);
+            z-index: 25;
+            height: 220px; /* Expand slightly */
+        }
+
+        .open .letter-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Heart Animation Canvas */
+        #heart-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Wax Seal */
+        .seal {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: #8a4e4e;
+            border-radius: 50%;
+            z-index: 40;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+        
+        .seal::after {
+            content: '♥';
+            color: #d7a9a9;
+            font-size: 24px;
+        }
+
+        .open .seal {
+            opacity: 0;
+        }
+
+        /* Instruction Text */
+        .instruction {
+            position: absolute;
+            bottom: -60px;
+            width: 100%;
+            text-align: center;
+            color: #6d4844;
+            font-family: 'Dancing Script', cursive, bold;
+            font-size: 1.5rem;
+            opacity: 0.9;
+            animation: pulse 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-5px); }
+        }
+
+        .hide-instruction {
+            opacity: 0 !important;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center relative">
+
+    <!-- Background Animation Canvas -->
+    <canvas id="heart-canvas"></canvas>
+
+    <!-- Main Content -->
+    <div class="relative z-10 flex flex-col items-center">
+        
+        <!-- Envelope Wrapper -->
+        <div class="envelope-container" id="envelope" onclick="openEnvelope()">
+            
+            <!-- The Letter (Inside) -->
+            <div class="letter">
+                <div class="letter-content">
+                    <h1>Te kam zemerrrr <3</h1>
+                </div>
+            </div>
+
+            <!-- Envelope Parts -->
+            <div class="side-left"></div>
+            <div class="side-right"></div>
+            <div class="pocket"></div>
+            
+            <!-- Flap (Top) -->
+            <div class="flap">
+                <div class="seal"></div>
+            </div>
+
+        </div>
+
+        <div class="instruction" id="instruction">Click to open</div>
+
+    </div>
+
+    <script>
+        const envelope = document.getElementById('envelope');
+        const instruction = document.getElementById('instruction');
+        let isOpen = false;
+
+        function openEnvelope() {
+            if (isOpen) return;
+            
+            isOpen = true;
+            envelope.classList.add('open');
+            instruction.classList.add('hide-instruction');
+            
+            // Trigger massive heart explosion
+            createExplosion();
+        }
+
+        // --- Heart Particle System ---
+        const canvas = document.getElementById('heart-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let hearts = [];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class Heart {
+            constructor(x, y, type = 'background') {
+                this.x = x || Math.random() * width;
+                this.y = y || height + 20;
+                this.type = type; // 'background' or 'explosion'
+                
+                if (type === 'explosion') {
+                    this.vx = (Math.random() - 0.5) * 10;
+                    this.vy = (Math.random() - 1) * 10 - 5;
+                    this.size = Math.random() * 15 + 10;
+                    this.alpha = 1;
+                    this.decay = Math.random() * 0.02 + 0.01;
+                    this.color = `hsl(${Math.random() * 60 + 330}, 100%, 60%)`; // Pinks and Reds
+                } else {
+                    // Background ambient hearts
+                    this.vx = (Math.random() - 0.5) * 1;
+                    this.vy = -Math.random() * 2 - 0.5;
+                    this.size = Math.random() * 10 + 5;
+                    this.alpha = Math.random() * 0.5 + 0.1;
+                    this.decay = 0;
+                    this.color = `rgba(255, 255, 255, ${this.alpha})`;
+                }
+                
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.rotation += this.rotationSpeed;
+
+                if (this.type === 'explosion') {
+                    this.vy += 0.2; // Gravity
+                    this.alpha -= this.decay;
+                } else {
+                    // Reset background hearts
+                    if (this.y < -50) {
+                        this.y = height + 50;
+                        this.x = Math.random() * width;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                
+                // Draw Heart Shape
+                ctx.beginPath();
+                let s = this.size;
+                ctx.moveTo(0, -s/2);
+                ctx.bezierCurveTo(s/2, -s, s, -s/3, 0, s);
+                ctx.bezierCurveTo(-s, -s/3, -s/2, -s, 0, -s/2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        // Initialize background hearts
+        for (let i = 0; i < 30; i++) {
+            hearts.push(new Heart(null, Math.random() * height, 'background'));
+        }
+
+        function createExplosion() {
+            // Create burst of hearts from center
+            const centerX = width / 2;
+            const centerY = height / 2;
+            for (let i = 0; i < 50; i++) {
+                hearts.push(new Heart(centerX, centerY, 'explosion'));
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            
+            // Update and draw all hearts
+            for (let i = hearts.length - 1; i >= 0; i--) {
+                hearts[i].update();
+                hearts[i].draw();
+                
+                // Remove dead explosion hearts
+                if (hearts[i].type === 'explosion' && hearts[i].alpha <= 0) {
+                    hearts.splice(i, 1);
+                }
+            }
+            
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+    </script>
+</body>
+</html>
